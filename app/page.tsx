@@ -1,60 +1,115 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [amount, setAmount] = useState("");
-  const [desc, setDesc] = useState("");
-  const [expenses, setExpenses] = useState<
-    { amount: string; desc: string }[]
-  >([]);
+  const [description, setDescription] = useState("");
+  const [expenses, setExpenses] = useState<any[]>([]);
 
-  const addExpense = () => {
-    if (!amount || !desc) return;
+  const getExpenses = async () => {
+    const res = await fetch("/api/expenses");
+    const data = await res.json();
+    setExpenses(data);
+  };
 
-    setExpenses([...expenses, { amount, desc }]);
+  useEffect(() => {
+    getExpenses();
+  }, []);
+
+  const addExpense = async () => {
+    await fetch("/api/expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        amount,
+        description,
+      }),
+    });
+
     setAmount("");
-    setDesc("");
+    setDescription("");
+    getExpenses();
   };
 
   return (
-    <div className="p-6">
-      <Card className="max-w-md mx-auto p-4">
-        <CardContent>
-          <h1 className="text-xl font-bold mb-4">Finance Tracker</h1>
+    <div style={{
+      minHeight: "100vh",
+      background: "#f5f6fa",
+      padding: "20px"
+    }}>
+      <div style={{
+        maxWidth: "600px",
+        margin: "auto",
+        background: "white",
+        padding: "20px",
+        borderRadius: "10px",
+        boxShadow: "0 5px 15px rgba(0,0,0,0.1)"
+      }}>
+        <h1 style={{ textAlign: "center" }}>💰 Finance Tracker</h1>
 
+        <h2 style={{ textAlign: "center", color: "green" }}>
+          Total: ₹{expenses.reduce((sum, e) => sum + e.amount, 0)}
+        </h2>
+
+        {/* Input */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
           <input
-            type="text"
             placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="border p-2 w-full mb-2 rounded"
+            style={{
+              flex: 1,
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc"
+            }}
           />
 
           <input
-            type="text"
             placeholder="Description"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            className="border p-2 w-full mb-2 rounded"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            style={{
+              flex: 2,
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc"
+            }}
           />
 
           <button
             onClick={addExpense}
-            className="bg-blue-500 text-white px-4 py-2 w-full rounded"
+            style={{
+              background: "#0070f3",
+              color: "white",
+              border: "none",
+              padding: "10px 15px",
+              borderRadius: "5px",
+              cursor: "pointer"
+            }}
           >
-            Add Expense
+            Add
           </button>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="max-w-md mx-auto mt-4">
-        {expenses.map((item, index) => (
-          <div key={index} className="border p-2 mb-2 rounded">
-            ₹{item.amount} - {item.desc}
+        {/* List */}
+        {expenses.length === 0 ? (
+          <p style={{ textAlign: "center" }}>No expenses yet</p>
+        ) : (
+          <div>
+            {expenses.map((e) => (
+              <div key={e.id} style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "10px",
+                borderBottom: "1px solid #eee"
+              }}>
+                <span>₹{e.amount}</span>
+                <span>{e.description}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
